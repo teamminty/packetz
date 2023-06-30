@@ -1,0 +1,17 @@
+[package]
+name = "packetz"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["client", "server"]
+server = []
+client = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.29.0", features = ["net", "io-util", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1.29.0", features = ["net", "io-util", "time", "rt", "rt-multi-thread"] }
