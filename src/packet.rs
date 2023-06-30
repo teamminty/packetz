@@ -6,6 +6,9 @@ pub struct PacketStream<S: AsyncWriteExt + AsyncReadExt> {
 }
 
 impl<S: AsyncReadExt + AsyncWriteExt + core::marker::Unpin> PacketStream<S> {
+    pub fn disconnect(self) {
+        drop(self);
+    }
     pub fn with_stream(stream: S) -> Self {
         Self {
             stream
