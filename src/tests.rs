@@ -5,6 +5,9 @@ fn server_client() {
         .build()
         .unwrap()
         .block_on(async {
+
+            /////////////////////////////////////////////////
+
             let s = crate::server::Server::bind("0.0.0.0:5515");
             let listener = s.listen().await.unwrap();
             let cfut = tokio::spawn(async {
@@ -19,5 +22,8 @@ fn server_client() {
                 "Hello, Packetz!".to_string()
             );
             cfut.await.unwrap();
+
+
+            /////////////////////////////////////////////////
     });
 }
