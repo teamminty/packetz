@@ -7,13 +7,15 @@ license = "ISC"
 
 [features]
 default = ["client", "server"]
-server = []
-client = []
+server = ["tokio/net"]
+client = ["tokio/net"]
+full = ["client", "server"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.29.0", features = ["net", "io-util", "time"] }
+tokio = { version = "1.29.0", features = ["io-util", "time"] }
 
 [dev-dependencies]
 tokio = { version = "1.29.0", features = ["net", "io-util", "time", "rt", "rt-multi-thread"] }
+packetz = { path = ".", features = ["full"] }
