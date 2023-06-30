@@ -1,6 +1,6 @@
 [package]
 name = "packetz"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Create async packet-based servers with ease, Built with gamedev in mind. Stay tuned for UDP support, TLS support and more!"
 license = "ISC"
