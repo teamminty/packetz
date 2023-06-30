@@ -6,9 +6,15 @@ pub struct PacketStream<S: AsyncWriteExt + AsyncReadExt> {
 }
 
 impl<S: AsyncReadExt + AsyncWriteExt + core::marker::Unpin> PacketStream<S> {
+    pub fn with_stream(stream: S) -> Self {
+        Self {
+            stream
+        }
+    }
     pub async fn recv(&mut self) -> Result<Packet, io::Error> {
         let arrived_at = Instant::now();
-        let v = &[0u8; 4];
+        let v = &mut [0u8; 4];
+        self.stream.read_exact(v).await?;
         let len = u32::from_le_bytes(*v);
         let mut v = Vec::new();
         self.read_to_vec(&mut v, len).await?;
@@ -27,14 +33,16 @@ impl<S: AsyncReadExt + AsyncWriteExt + core::marker::Unpin> PacketStream<S> {
     }
     pub async fn send(&mut self, b: impl AsRef<[u8]>) -> Result<usize, io::Error> {
         let b = b.as_ref();
-        let mut written = 4;
+        let written = 4 + b.len();
         self.stream.write_all(&<usize as TryInto<u32>>::try_into(b.len()).map_err(|_| {
-            io::Error::from(io::ErrorKind::InvalidData);
+            io::Error::from(io::ErrorKind::InvalidData)
         })?.to_le_bytes()).await?;
+        self.stream.write_all(b).await?;
         Ok(written)
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Packet {
     pub body: Vec<u8>,
     pub arrived_at: Instant
