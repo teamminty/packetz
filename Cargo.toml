@@ -1,6 +1,6 @@
 [package]
 name = "packetz"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2021"
 description = "Create async packet-based servers with ease, Built with gamedev in mind. Stay tuned for UDP support, TLS support and more!"
 license = "ISC"
@@ -9,13 +9,17 @@ license = "ISC"
 default = ["client", "server"]
 server = ["tokio/net"]
 client = ["tokio/net"]
-full = ["client", "server"]
+tls = ["dep:tokio-rustls"]
+full = ["client", "server", "tls"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 tokio = { version = "1.29.0", features = ["io-util", "time"] }
+tokio-rustls = { version = "0.24.1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.29.0", features = ["net", "io-util", "time", "rt", "rt-multi-thread"] }
 packetz = { path = ".", features = ["full"] }
+rustls-pemfile = { version = "1.0.3" }
+webpki-roots = { version = "0.23.1" }
