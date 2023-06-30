@@ -41,6 +41,7 @@ impl<S: AsyncReadExt + AsyncWriteExt + core::marker::Unpin> PacketStream<S> {
             io::Error::from(io::ErrorKind::InvalidData)
         })?.to_le_bytes()).await?;
         self.stream.write_all(b).await?;
+        self.stream.flush().await?;
         Ok(written)
     }
 }
