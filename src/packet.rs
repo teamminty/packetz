@@ -1,19 +1,48 @@
 use std::io;
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, time::Instant};
+use tokio::{io::{AsyncReadExt, AsyncWriteExt, ReadHalf, WriteHalf}, time::Instant};
 
-pub struct PacketStream<S: AsyncWriteExt + AsyncReadExt> {
-    pub(crate) stream: S
+pub struct PacketStream<Read: AsyncReadExt + Unpin, Write: AsyncWriteExt> {
+    pub(crate) read: PacketRead<Read>,
+    pub(crate) write: PacketWrite<Write>
 }
 
-impl<S: AsyncReadExt + AsyncWriteExt + core::marker::Unpin> PacketStream<S> {
+pub struct PacketRead<S: AsyncReadExt + Unpin> {
+    pub(crate) stream: ReadHalf<S>
+}
+
+pub struct PacketWrite<S: AsyncWriteExt> {
+    pub(crate) stream: WriteHalf<S>
+}
+
+
+impl<Read: AsyncReadExt + Unpin, Write: AsyncWriteExt> PacketStream<Read, Write> {
     pub fn disconnect(self) {
         drop(self);
     }
-    pub fn with_stream(stream: S) -> Self {
+    pub fn with_stream(read: ReadHalf<Read>, write: WriteHalf<Write>) -> Self {
         Self {
-            stream
+            read: PacketRead { stream: read },
+            write: PacketWrite { stream: write }
         }
     }
+    pub async fn recv(&mut self) -> Result<Packet, io::Error> {
+        self.read.recv().await
+    }
+    pub async fn send(&mut self, b: impl AsRef<[u8]>) -> Result<usize, io::Error> {
+        self.write.send(b).await
+    }
+    pub fn split(self) -> (PacketRead<Read>, PacketWrite<Write>) {
+        (self.read, self.write)
+    }
+    pub fn split_mut(&mut self) -> (&mut PacketRead<Read>, &mut PacketWrite<Write>) {
+        (&mut self.read, &mut self.write)
+    }
+    pub fn split_ref(&self) -> (&PacketRead<Read>, &PacketWrite<Write>) {
+        (&self.read, &self.write)
+    }
+}
+
+impl<S: AsyncReadExt + Unpin> PacketRead<S> {
     pub async fn recv(&mut self) -> Result<Packet, io::Error> {
         let arrived_at = Instant::now();
         let v = &mut [0u8; 4];
@@ -34,6 +63,9 @@ impl<S: AsyncReadExt + AsyncWriteExt + core::marker::Unpin> PacketStream<S> {
         }
         Ok(())
     }
+}
+
+impl<S: AsyncWriteExt> PacketWrite<S> {
     pub async fn send(&mut self, b: impl AsRef<[u8]>) -> Result<usize, io::Error> {
         let b = b.as_ref();
         let written = 4 + b.len();

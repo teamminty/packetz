@@ -1,5 +1,5 @@
 # Packetz
-Create async packet-based servers with ease, Built with gamedev in mind. Stay tuned for UDP support, TLS support and more!
+Create async packet-based servers with ease, Built with gamedev in mind. Stay tuned for UDP support, and more!
 
 ## Basic usage
 
@@ -13,18 +13,19 @@ async fn main() -> Result<(), std::io::Error> {
     let listener: ServerListener = server.listen().await?;
 
     loop {
-        let mut (
-            connection: PacketStream<tokio::net::TcpStream>,
-            addr: std::net::SocketAddr
+        let (
+            mut connection,
+            addr
         ) = listener.accept().await?;
-        tokio::spawn(async move {
+        let _: tokio::task::JoinHandle<Result<(), std::io::Error>> = tokio::spawn(async move {
             'l: loop { // In a real world scenario we would check for errors on the `send` and `recv` methods, and break the loop if one is found, and disconnect the client without disconnecting all other clients.
                 let msg = connection.recv().await?;
-                connection.send(msg).await?;
+                connection.send(msg.body).await?;
                 connection.disconnect(); // This is optional, as all it does is drop the PacketStream, and breaking the loop should automaticall drop it.
                 break 'l;
             }
-        })
+            Ok(())
+        });
     }
 }
 ```
