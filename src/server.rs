@@ -3,6 +3,8 @@ use tokio::{net, io::split};
 use std::net::SocketAddr;
 use crate::packet::*;
 
+pub type TcpPacketStream = PacketStream<net::TcpStream, net::TcpStream>;
+
 pub struct Server<Url: net::ToSocketAddrs> {
     bind: Url
 }
@@ -25,7 +27,7 @@ pub struct ServerListener {
 }
 
 impl ServerListener {
-    pub async fn accept(&self) -> Result<(PacketStream<net::TcpStream, net::TcpStream>, SocketAddr), io::Error> {
+    pub async fn accept(&self) -> Result<(TcpPacketStream, SocketAddr), io::Error> {
         let (stream, addr) = self.listener.accept().await?;
         let (read, write) = split(stream);
         Ok((
@@ -48,6 +50,8 @@ pub mod tls {
     use tokio_rustls::TlsAcceptor;
     use crate::packet::*;
     use tokio_rustls::rustls::ServerConfig;
+
+    pub type TlsServerTcpPacketStream = PacketStream<tokio_rustls::server::TlsStream<tokio::net::TcpStream>, tokio_rustls::server::TlsStream<tokio::net::TcpStream>>;
 
     pub struct Server<Url: net::ToSocketAddrs> {
         bind: Url
@@ -73,7 +77,7 @@ pub mod tls {
     }
 
     impl ServerListener {
-        pub async fn accept(&self) -> Result<(PacketStream<tokio_rustls::server::TlsStream<tokio::net::TcpStream>, tokio_rustls::server::TlsStream<tokio::net::TcpStream>>, SocketAddr), io::Error> {
+        pub async fn accept(&self) -> Result<(TlsServerTcpPacketStream, SocketAddr), io::Error> {
             let (stream, addr) = self.listener.accept().await?;
             let stream = self.acceptor.accept(stream).await?;
             let (read, write) = split(stream);

@@ -2,7 +2,9 @@ use tokio::{net, io::split};
 use crate::packet::*;
 use std::io;
 
-pub async fn connect<Url: net::ToSocketAddrs>(url: Url) -> Result<PacketStream<net::TcpStream, net::TcpStream>, io::Error> {
+pub type TcpPacketStream = PacketStream<net::TcpStream, net::TcpStream>;
+
+pub async fn connect<Url: net::ToSocketAddrs>(url: Url) -> Result<TcpPacketStream, io::Error> {
     let stream = net::TcpStream::connect(url).await?;
     let (read, write) = split(stream);
     Ok(PacketStream {
@@ -22,15 +24,17 @@ pub mod tls {
     use std::io;
     use std::sync::Arc;
 
-    pub async fn connect<Url: AsRef<str> + net::ToSocketAddrs>(url: Url, config: Arc<ClientConfig>) -> Result<
-        PacketStream<
-            tokio_rustls::client::TlsStream<
-                tokio::net::TcpStream
-            >,
-            tokio_rustls::client::TlsStream<
-                tokio::net::TcpStream
-            >
+    pub type TlsClientTcpPacketStream = PacketStream<
+        tokio_rustls::client::TlsStream<
+            tokio::net::TcpStream
         >,
+        tokio_rustls::client::TlsStream<
+            tokio::net::TcpStream
+        >
+    >;
+
+    pub async fn connect<Url: AsRef<str> + net::ToSocketAddrs>(url: Url, config: Arc<ClientConfig>) -> Result<
+        TlsClientTcpPacketStream,
         io::Error
     > {
         let connector = TlsConnector::from(config);
